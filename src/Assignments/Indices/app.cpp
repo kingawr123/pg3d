@@ -7,6 +7,7 @@
 #include <iostream>
 #include <vector>
 #include <tuple>
+#include <numeric>
 
 #include "Application/utils.h"
 
@@ -26,17 +27,29 @@ void SimpleShapeApplication::init() {
     std::vector<GLfloat> vertices = {
         // Triangle (roof) - red
         -0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
-         0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
          0.0f, 0.5f, 0.0f, 1.0f, 0.0f, 0.0f,
+         0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
 
-        // Rectangle (walls) - green
-        -0.5f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f,
-         0.5f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f,
+        // missing vertexes for Rectangle (walls) - green
         -0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 0.0f,
          0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 0.0f
 
     };
 
+
+    std::vector<GLushort> indexes = {
+        0, 1, 2,        // roof
+        0, 2, 3,        // first wall triangle
+        3, 4, 2         // second wall triangle
+    };
+
+
+    // Buffer with indexes
+    GLuint i_buffer_handle;
+    glGenBuffers(1, &i_buffer_handle);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, i_buffer_handle);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, indexes.size() * sizeof(GLushort), indexes.data(), GL_STATIC_DRAW);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
     // Generating the buffer and loading the vertex data into it.
     GLuint v_buffer_handle;
@@ -49,6 +62,13 @@ void SimpleShapeApplication::init() {
     // the state of all vertex buffers needed for rendering
     glGenVertexArrays(1, &vao_);
     glBindVertexArray(vao_);
+
+    // -----------  indexes  ----------------
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, i_buffer_handle);
+
+    // ----------- vertices ----------------
+
     glBindBuffer(GL_ARRAY_BUFFER, v_buffer_handle);
 
     // This indicates that the data for attribute 0 should be read from a vertex buffer.
@@ -56,10 +76,13 @@ void SimpleShapeApplication::init() {
     // and this specifies how the data is layout in the buffer.
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), reinterpret_cast<GLvoid *>(0));
 
+    // colors rgb
     glEnableVertexAttribArray(1);
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), reinterpret_cast<GLvoid *>(3 * sizeof(GLfloat)));
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+
     glBindVertexArray(0);
     //end of vao "recording"
 
@@ -78,7 +101,6 @@ void SimpleShapeApplication::init() {
 void SimpleShapeApplication::frame() {
     // Binding the VAO will setup all the required vertex buffers.
     glBindVertexArray(vao_);
-    glDrawArrays(GL_TRIANGLES, 0, 3);
-    glDrawArrays(GL_TRIANGLE_STRIP, 3, 4);
+    glDrawElements(GL_TRIANGLES, 9, GL_UNSIGNED_SHORT, nullptr);
     glBindVertexArray(0);
 }
