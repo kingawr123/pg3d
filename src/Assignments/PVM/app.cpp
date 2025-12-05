@@ -13,6 +13,7 @@
 
 #include "Application/utils.h"
 #include "glm/ext/scalar_constants.hpp"
+#include "glm/gtc/matrix_transform.hpp"
 
 void SimpleShapeApplication::init() {
     // A utility function that reads the shader sources, compiles them and creates the program object
@@ -25,6 +26,8 @@ void SimpleShapeApplication::init() {
         std::cerr << "Invalid program" << std::endl;
         exit(-1);
     }
+
+    auto[width, height] = frame_buffer_size();
 
     // A vector containing the x,y,z, r, g, b vertex coordinates for shapes.
     std::vector<GLfloat> vertices = {
@@ -57,32 +60,15 @@ void SimpleShapeApplication::init() {
     modifier_uniform_data[5] = color[1];
     modifier_uniform_data[6] = color[2];
 
-    // transform data:
-    float theta = 1.0*glm::pi<float>() / 6.0f; // 30°
-    float cs = std::cos(theta);
-    float ss = std::sin(theta);
-    glm::mat2 rot{cs, ss, -ss, cs};
-    glm::vec2 trans{0.0f, -0.25f};
-    glm::vec2 scale{0.5f, 0.5f};
+    // transformations data:
+    glm::mat4 PVM(1.0f);
+    glm::mat4 P_matrix = glm::perspective(glm::radians(30.0f), static_cast<float>(width)/static_cast<float>(height), 0.1f, 100.0f);
+    glm::mat4 V_matrix = glm::lookAt(
+        glm::vec3(3.0f, 0.0f, 2.0f),
+        glm::vec3(0.0f, 0.0f, 0.0f),
+        glm::vec3(0.0f, 1.0f, 0.0f));
 
-    float transform_uniform_data[12] = {0}; // 12 floatów = 48 B
-
-    // scale: offset 0 B -> float 0..1
-    transform_uniform_data[0] = scale.x;
-    transform_uniform_data[1] = scale.y;
-
-    // translation: offset 8 B -> float 2..3
-    transform_uniform_data[2] = trans.x;
-    transform_uniform_data[3] = trans.y;
-
-    // rotation: offset 16 B -> a, b w floatach 4..7 (6..7 padding)
-    transform_uniform_data[4] = rot[0].x;  // cs
-    transform_uniform_data[5] = rot[0].y;  // ss
-
-    // rotation: offset 32 B -> c, d w floatach 8..11 (10..11 padding)
-    transform_uniform_data[8]  = rot[1].x; // -ss
-    transform_uniform_data[9]  = rot[1].y; //  cs
-
+    PVM = P_matrix * V_matrix * PVM;
 
     // Buffer with indexes
     GLuint i_buffer_handle;
@@ -109,7 +95,7 @@ void SimpleShapeApplication::init() {
     GLuint transform_u_buffer_handle;
     glGenBuffers(1, &transform_u_buffer_handle);
     glBindBuffer(GL_UNIFORM_BUFFER, transform_u_buffer_handle);
-    glBufferData(GL_UNIFORM_BUFFER, 12*sizeof(float), nullptr, GL_STATIC_DRAW); // 12 * sizeof(floa) = 48
+    glBufferData(GL_UNIFORM_BUFFER, 16*sizeof(float), nullptr, GL_STATIC_DRAW); // 16 * sizeof(float) = 64
     glBindBufferBase(GL_UNIFORM_BUFFER, 1, transform_u_buffer_handle);
 
     // This setups a Vertex Array Object (VAO) that  encapsulates
@@ -125,7 +111,11 @@ void SimpleShapeApplication::init() {
     // ----------- uniform transform ---------
 
     glBindBuffer(GL_UNIFORM_BUFFER, transform_u_buffer_handle);
-    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(transform_uniform_data), transform_uniform_data);
+
+    glBufferSubData(GL_UNIFORM_BUFFER, 0,  sizeof(PVM[0]), &PVM[0]);
+    glBufferSubData(GL_UNIFORM_BUFFER, 16, sizeof(PVM[1]), &PVM[1]);
+    glBufferSubData(GL_UNIFORM_BUFFER, 32, sizeof(PVM[2]), &PVM[2]);
+    glBufferSubData(GL_UNIFORM_BUFFER, 48, sizeof(PVM[3]), &PVM[3]);
 
     // -----------  indexes  ----------------
 
@@ -155,8 +145,7 @@ void SimpleShapeApplication::init() {
     glClearColor(0.81f, 0.81f, 0.8f, 1.0f);
 
     // This setups an OpenGL vieport of the size of the whole rendering window.
-    auto[w, h] = frame_buffer_size();
-    glViewport(0, 0, w, h);
+    glViewport(0, 0, width, height);
 
     glUseProgram(program);
 }
