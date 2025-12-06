@@ -27,8 +27,6 @@ void SimpleShapeApplication::init() {
         exit(-1);
     }
 
-    auto[width, height] = frame_buffer_size();
-
     // A vector containing the x,y,z, r, g, b vertex coordinates for shapes.
     std::vector<GLfloat> vertices = {
         // new pyramid
@@ -80,15 +78,8 @@ void SimpleShapeApplication::init() {
     modifier_uniform_data[5] = color[1];
     modifier_uniform_data[6] = color[2];
 
-    // transformations data:
-    glm::mat4 PVM(1.0f);
-    glm::mat4 P_matrix = glm::perspective(glm::radians(45.0f), static_cast<float>(width)/static_cast<float>(height), 0.1f, 100.0f);
-    glm::mat4 V_matrix = glm::lookAt(
-        glm::vec3(1.0f, -1.0f, 3.0f),
-        glm::vec3(0.0f, 0.0f, 0.0f),
-        glm::vec3(0.0f, 1.0f, 0.0f));
-
-    PVM = P_matrix * V_matrix * PVM;
+    // transformations PVM data:
+    auto PVM = P_ * V_;
 
     // Buffer with indexes
     GLuint i_buffer_handle;
@@ -111,12 +102,11 @@ void SimpleShapeApplication::init() {
     glBufferData(GL_UNIFORM_BUFFER, 8*sizeof(float), nullptr, GL_STATIC_DRAW);
     glBindBufferBase(GL_UNIFORM_BUFFER, 0, modifier_u_buffer_handle);
 
-    // uniform transform buffer
-    GLuint transform_u_buffer_handle;
-    glGenBuffers(1, &transform_u_buffer_handle);
-    glBindBuffer(GL_UNIFORM_BUFFER, transform_u_buffer_handle);
+    // uniform transform PVM buffer
+    glBindBuffer(GL_UNIFORM_BUFFER, u_pvm_buffer_);
     glBufferData(GL_UNIFORM_BUFFER, 16*sizeof(float), nullptr, GL_STATIC_DRAW); // 16 * sizeof(float) = 64
-    glBindBufferBase(GL_UNIFORM_BUFFER, 1, transform_u_buffer_handle);
+    glBindBufferBase(GL_UNIFORM_BUFFER, 1, u_pvm_buffer_);
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
     // This setups a Vertex Array Object (VAO) that  encapsulates
     // the state of all vertex buffers needed for rendering
@@ -124,25 +114,24 @@ void SimpleShapeApplication::init() {
     glBindVertexArray(vao_);
 
     // ----------- uniform modifier ---------
-
     glBindBuffer(GL_UNIFORM_BUFFER, modifier_u_buffer_handle);
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(modifier_uniform_data), modifier_uniform_data);
 
-    // ----------- uniform transform ---------
 
-    glBindBuffer(GL_UNIFORM_BUFFER, transform_u_buffer_handle);
+    // ----------- uniform transform ---------
+    glBindBuffer(GL_UNIFORM_BUFFER, u_pvm_buffer_);
 
     glBufferSubData(GL_UNIFORM_BUFFER, 0,  sizeof(PVM[0]), &PVM[0]);
     glBufferSubData(GL_UNIFORM_BUFFER, 16, sizeof(PVM[1]), &PVM[1]);
     glBufferSubData(GL_UNIFORM_BUFFER, 32, sizeof(PVM[2]), &PVM[2]);
     glBufferSubData(GL_UNIFORM_BUFFER, 48, sizeof(PVM[3]), &PVM[3]);
 
-    // -----------  indexes  ----------------
 
+    // -----------  indexes  ----------------
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, i_buffer_handle);
 
-    // ----------- vertices ----------------
 
+    // ----------- vertices ----------------
     glBindBuffer(GL_ARRAY_BUFFER, v_buffer_handle);
 
     // This indicates that the data for attribute 0 should be read from a vertex buffer.
@@ -165,9 +154,17 @@ void SimpleShapeApplication::init() {
     glClearColor(0.81f, 0.81f, 0.8f, 1.0f);
 
     // This setups an OpenGL vieport of the size of the whole rendering window.
-    glViewport(0, 0, width, height);
+    auto[w, h] = frame_buffer_size();
+    glViewport(0, 0, w, h);
 
     glUseProgram(program);
+}
+
+void SimpleShapeApplication::framebuffer_resize_callback(int w, int h) {
+    Application::framebuffer_resize_callback(w, h);
+    glViewport(0,0,w,h);
+    aspect_ = static_cast<float>(w) / h;
+    P_ = glm::perspective(fov_, aspect_, near_, far_);
 }
 
 //This functions is called every frame and does the actual rendering.
