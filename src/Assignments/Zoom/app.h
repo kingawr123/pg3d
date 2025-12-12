@@ -29,12 +29,11 @@ public:
         float far = 100.0f;
 
         set_camera(new Camera);
-        camera_->perspective(fov, aspect, near, far);
-        camera_->look_at(glm::vec3(3.0f, 0.0f, 2.0f),
+        camera()->perspective(fov, aspect, near, far);
+        camera()->look_at(glm::vec3(-2.0f, 1.0f, 3.0f),
         glm::vec3(0.0f, 0.0f, 0.0f),
         glm::vec3(0.0f, 1.0f, 0.0f));
 
-        glGenBuffers(1, &u_pvm_buffer_);
         glGenBuffers(1, &u_pvm_buffer_);
     }
 
@@ -50,7 +49,7 @@ public:
 
     void scroll_callback(double xoffset, double yoffset) override {
         Application::scroll_callback(xoffset, yoffset);
-        camera()->zoom(yoffset / 30.0f);
+        camera()->zoom(yoffset / 5.0f);
     }
 
     ~SimpleShapeApplication() {

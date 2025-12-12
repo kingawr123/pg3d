@@ -32,13 +32,17 @@ public:
     glm::mat4 projection() const { return glm::perspective(fov_, aspect_, near_, far_); }
 
     void zoom(float y_offset) {
-        auto x = fov_/glm::pi<float>();
-        auto y = inverse_logistics(x);
-        y+=y_offset;
-        x = logistic(y);
-        fov_ = x*glm::pi<float>();
+        // Positive y_offset (wheel up) → zoom in → reduce FOV
+        const float k = 0.1f; // sensitivity
+        float scale = std::exp(-k * static_cast<float>(y_offset));
+        float fov_new = fov_ * scale;
+
+        const float FOV_MIN = glm::radians(5.0f);
+        const float FOV_MAX = glm::radians(90.0f);
+        fov_ = std::clamp(fov_new, FOV_MIN, FOV_MAX);
 
     }
+
 private:
     float fov_;
     float aspect_;

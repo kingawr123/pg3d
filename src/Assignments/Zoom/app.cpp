@@ -14,6 +14,7 @@
 #include "Application/utils.h"
 #include "glm/ext/scalar_constants.hpp"
 #include "glm/gtc/matrix_transform.hpp"
+#include "glm/gtc/type_ptr.hpp"
 
 void SimpleShapeApplication::init() {
     // A utility function that reads the shader sources, compiles them and creates the program object
@@ -78,8 +79,8 @@ void SimpleShapeApplication::init() {
     modifier_uniform_data[5] = color[1];
     modifier_uniform_data[6] = color[2];
 
-    // transformations PVM data:
-    auto PVM = camera_->projection() * camera_->view();
+    // // transformations PVM data:
+    // auto PVM = camera_->projection() * camera_->view();
 
     // Buffer with indexes
     GLuint i_buffer_handle;
@@ -119,12 +120,12 @@ void SimpleShapeApplication::init() {
 
 
     // ----------- uniform transform ---------
-    glBindBuffer(GL_UNIFORM_BUFFER, u_pvm_buffer_);
-
-    glBufferSubData(GL_UNIFORM_BUFFER, 0,  sizeof(PVM[0]), &PVM[0]);
-    glBufferSubData(GL_UNIFORM_BUFFER, 16, sizeof(PVM[1]), &PVM[1]);
-    glBufferSubData(GL_UNIFORM_BUFFER, 32, sizeof(PVM[2]), &PVM[2]);
-    glBufferSubData(GL_UNIFORM_BUFFER, 48, sizeof(PVM[3]), &PVM[3]);
+    // glBindBuffer(GL_UNIFORM_BUFFER, u_pvm_buffer_);
+    //
+    // glBufferSubData(GL_UNIFORM_BUFFER, 0,  sizeof(PVM[0]), &PVM[0]);
+    // glBufferSubData(GL_UNIFORM_BUFFER, 16, sizeof(PVM[1]), &PVM[1]);
+    // glBufferSubData(GL_UNIFORM_BUFFER, 32, sizeof(PVM[2]), &PVM[2]);
+    // glBufferSubData(GL_UNIFORM_BUFFER, 48, sizeof(PVM[3]), &PVM[3]);
 
 
     // -----------  indexes  ----------------
@@ -164,14 +165,18 @@ void SimpleShapeApplication::framebuffer_resize_callback(int w, int h) {
     Application::framebuffer_resize_callback(w, h);
     glViewport(0,0,w,h);
     camera_->set_aspect(static_cast<float>(w) / h);
-    // camera_->perspective()
-    // P_ = glm::perspective(fov_, aspect_, near_, far_);
 }
 
 //This functions is called every frame and does the actual rendering.
 void SimpleShapeApplication::frame() {
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
+
+    // --- Update PVM on GPU ---
+    auto PVM = camera_->projection() * camera_->view();
+    glBindBuffer(GL_UNIFORM_BUFFER, u_pvm_buffer_);
+    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(PVM));
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
     // Binding the VAO will setup all the required vertex buffers.
     glBindVertexArray(vao_);
