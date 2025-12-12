@@ -8,6 +8,8 @@ add_executable(${PROJECT_NAME}
         app.h
         app.cpp
         camera.h
+        rotation.h
+        camera_controller.h
 )
         
 target_link_libraries(${PROJECT_NAME} PUBLIC )

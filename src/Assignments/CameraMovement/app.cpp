@@ -12,8 +12,6 @@
 #include <glm/glm.hpp>
 
 #include "Application/utils.h"
-#include "glm/ext/scalar_constants.hpp"
-#include "glm/gtc/matrix_transform.hpp"
 #include "glm/gtc/type_ptr.hpp"
 
 void SimpleShapeApplication::init() {
@@ -27,6 +25,8 @@ void SimpleShapeApplication::init() {
         std::cerr << "Invalid program" << std::endl;
         exit(-1);
     }
+
+    set_controller(new CameraController(camera()));
 
     // A vector containing the x,y,z, r, g, b vertex coordinates for shapes.
     std::vector<GLfloat> vertices = {
@@ -60,7 +60,7 @@ void SimpleShapeApplication::init() {
 
 
     std::vector<GLushort> indexes = {
-        0, 1, 2,
+        0, 2, 1,
         3, 5, 4,
         6, 7, 8,
         9, 10, 11,
@@ -79,8 +79,6 @@ void SimpleShapeApplication::init() {
     modifier_uniform_data[5] = color[1];
     modifier_uniform_data[6] = color[2];
 
-    // // transformations PVM data:
-    // auto PVM = camera_->projection() * camera_->view();
 
     // Buffer with indexes
     GLuint i_buffer_handle;
@@ -119,15 +117,6 @@ void SimpleShapeApplication::init() {
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(modifier_uniform_data), modifier_uniform_data);
 
 
-    // ----------- uniform transform ---------
-    // glBindBuffer(GL_UNIFORM_BUFFER, u_pvm_buffer_);
-    //
-    // glBufferSubData(GL_UNIFORM_BUFFER, 0,  sizeof(PVM[0]), &PVM[0]);
-    // glBufferSubData(GL_UNIFORM_BUFFER, 16, sizeof(PVM[1]), &PVM[1]);
-    // glBufferSubData(GL_UNIFORM_BUFFER, 32, sizeof(PVM[2]), &PVM[2]);
-    // glBufferSubData(GL_UNIFORM_BUFFER, 48, sizeof(PVM[3]), &PVM[3]);
-
-
     // -----------  indexes  ----------------
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, i_buffer_handle);
 
@@ -151,10 +140,10 @@ void SimpleShapeApplication::init() {
     //end of vao "recording"
 
     // Setting the background color of the rendering window,
-    // I suggest not to use white or black for better debuging.
+    // I suggest not to use white or black for better debugging.
     glClearColor(0.81f, 0.81f, 0.8f, 1.0f);
 
-    // This setups an OpenGL vieport of the size of the whole rendering window.
+    // This setups an OpenGL viewport of the size of the whole rendering window.
     auto[w, h] = frame_buffer_size();
     glViewport(0, 0, w, h);
 
@@ -167,7 +156,8 @@ void SimpleShapeApplication::framebuffer_resize_callback(int w, int h) {
     camera_->set_aspect(static_cast<float>(w) / h);
 }
 
-//This functions is called every frame and does the actual rendering.
+
+//These functions are called every frame and does the actual rendering.
 void SimpleShapeApplication::frame() {
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
@@ -177,7 +167,7 @@ void SimpleShapeApplication::frame() {
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(PVM));
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
-    // Binding the VAO will setup all the required vertex buffers.
+    // Binding the VAO will set up all the required vertex buffers.
     glBindVertexArray(vao_);
     glDrawElements(GL_TRIANGLES, 25, GL_UNSIGNED_SHORT, nullptr);
     glBindVertexArray(0);

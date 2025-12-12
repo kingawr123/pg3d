@@ -13,8 +13,7 @@
 #include <glm/glm.hpp>
 
 #include "camera.h"
-#include "glm/ext/matrix_clip_space.hpp"
-#include "glm/ext/matrix_transform.hpp"
+#include "camera_controller.h"
 #include "glm/ext/scalar_constants.hpp"
 
 
@@ -52,6 +51,31 @@ public:
         camera()->zoom(yoffset / 5.0f);
     }
 
+    void set_controller(CameraController *controller) { controller_ = controller; }
+
+    void mouse_button_callback(int button, int action, int mods) {
+        Application::mouse_button_callback(button, action, mods);
+
+        if (controller_) {
+            double x, y;
+            glfwGetCursorPos(window_, &x, &y);
+
+            if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
+                controller_->LMB_pressed(x, y);
+
+            if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_RELEASE)
+                controller_->LMB_released(x, y);
+        }
+
+    }
+
+    void cursor_position_callback(double x, double y) {
+        Application::cursor_position_callback(x, y);
+        if (controller_) {
+            controller_->mouse_moved(x, y);
+        }
+    }
+
     ~SimpleShapeApplication() {
         if (camera_) {
             delete camera_;
@@ -60,5 +84,6 @@ public:
 private:
     GLuint vao_;
     Camera *camera_;
+    CameraController *controller_;
     GLuint u_pvm_buffer_;
 };
