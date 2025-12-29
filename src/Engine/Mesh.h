@@ -34,8 +34,9 @@ namespace xe {
 
         void vertex_attrib_pointer(GLuint index, GLuint size, GLenum type, GLsizei stride, GLsizei offset);
 
-        void add_submesh(GLuint start, GLuint end, Material* mat = nullptr) {
+        void add_submesh(GLuint start, GLuint end, Material* mat = nullptr) { // mat -> MeshesMaterials
             submeshes_.push_back({start, end});
+            // MeshesMaterials
             materials_.push_back(mat);
         }
 
@@ -48,6 +49,7 @@ namespace xe {
         GLuint i_buffer_;
 
         std::vector<SubMesh> submeshes_;
+        // MeshesMaterials
         std::vector<Material*> materials_;
 
     };

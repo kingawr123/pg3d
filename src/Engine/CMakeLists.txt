@@ -7,3 +7,5 @@ add_library(engine
         Mesh.h Mesh.cpp
         Material.h Material.cpp
         )
+
+target_link_libraries(engine PUBLIC objreader PRIVATE spdlog::spdlog)
