@@ -15,6 +15,7 @@
 #include "glm/gtc/type_ptr.hpp"
 #include "Engine/Mesh.h"
 #include "Engine/Material.h"
+#include "Engine/mesh_loader.h"
 
 #define STB_IMAGE_IMPLEMENTATION  1
 
@@ -32,7 +33,7 @@ void SimpleShapeApplication::init() {
     auto mat_cyan   = new xe::ColorMaterial(glm::vec4(0.0f, 1.0f, 1.0f, 1.0f)); // cyan
 
     auto texture_multicolor = new xe::ColorMaterial(glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
-    auto texture = xe::create_texture("multicolor.png");
+    auto texture = xe::create_texture( std::string(ROOT_DIR) + "/Models/multicolor.png");
     if (texture > 0) {
         texture_multicolor->set_texture(texture);
     }
@@ -97,7 +98,9 @@ void SimpleShapeApplication::init() {
     pyramid->add_submesh( 9, 12, texture_multicolor);   // fourth wall
     pyramid->add_submesh(12, 18, texture_multicolor);   // bottom (2 triangles)
 
-    add_submesh(pyramid);
+    xe::Mesh *pyramid_v2 = xe::load_mesh_from_obj(std::string(ROOT_DIR) + "/Models/pyramid.obj",
+                                                  std::string(ROOT_DIR) + "/Models");
+    add_submesh(pyramid_v2);
 
     // uniform transform PVM buffer
     glBindBuffer(GL_UNIFORM_BUFFER, u_pvm_buffer_);

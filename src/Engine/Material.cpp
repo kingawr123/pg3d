@@ -86,9 +86,7 @@ namespace xe {
     GLuint create_texture(const std::string &name) {
         stbi_set_flip_vertically_on_load(true);
         GLint width, height, channels;
-        auto texture_file = std::string(ROOT_DIR) + "/Models/" + name;
-
-        auto img = stbi_load(texture_file.c_str(), &width, &height, &channels, 0);
+        auto img = stbi_load(name.c_str(), &width, &height, &channels, 0);
         if (!img) {
             spdlog::warn("Could not read image from file `{}'", name);
             return 0;

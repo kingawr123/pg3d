@@ -34,13 +34,17 @@ namespace xe {
 
         void vertex_attrib_pointer(GLuint index, GLuint size, GLenum type, GLsizei stride, GLsizei offset);
 
-        void add_submesh(GLuint start, GLuint end, Material* mat = nullptr) { // mat -> MeshesMaterials
+        void add_submesh(GLuint start, GLuint end, Material* mat = nullptr) {
             submeshes_.push_back({start, end});
-            // MeshesMaterials
             materials_.push_back(mat);
         }
 
         void draw() const;
+
+        void *map_vertex_buffer();
+        void unmap_vertex_buffer();
+        void *map_index_buffer();
+        void unmap_index_buffer();
 
     private:
 
@@ -49,7 +53,6 @@ namespace xe {
         GLuint i_buffer_;
 
         std::vector<SubMesh> submeshes_;
-        // MeshesMaterials
         std::vector<Material*> materials_;
 
     };
