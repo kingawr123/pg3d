@@ -38,6 +38,8 @@ namespace xe {
 
         void bind();
 
+        void unbind();
+
         static void init();
 
         static GLuint program() { return shader_; }
@@ -55,6 +57,7 @@ namespace xe {
 
     };
 
+    GLuint create_texture(const std::string &name);
 
 }
 

@@ -16,6 +16,10 @@
 #include "Engine/Mesh.h"
 #include "Engine/Material.h"
 
+#define STB_IMAGE_IMPLEMENTATION  1
+
+#include "3rdParty/stb/stb_image.h"
+
 void SimpleShapeApplication::init() {
 
     xe::ColorMaterial::init();
@@ -27,32 +31,37 @@ void SimpleShapeApplication::init() {
     auto mat_purple = new xe::ColorMaterial(glm::vec4(1.0f, 0.0f, 1.0f, 1.0f)); // purple
     auto mat_cyan   = new xe::ColorMaterial(glm::vec4(0.0f, 1.0f, 1.0f, 1.0f)); // cyan
 
+    auto texture_multicolor = new xe::ColorMaterial(glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
+    auto texture = xe::create_texture("multicolor.png");
+    if (texture > 0) {
+        texture_multicolor->set_texture(texture);
+    }
 
     std::vector<GLfloat> vertices = {
-        -0.5f, -0.5f, 0.0f,
-         0.5f, -0.5f, 0.0f,
-         0.0f,  0.5f, 0.5f,
+        -0.5f, -0.5f, 0.0f, 0.191f, 0.5f,
+         0.5f, -0.5f, 0.0f, 0.5f, 0.809f,
+         0.0f,  0.5f, 0.5f, 0.0f, 1.0f,
 
         // second wall
-         0.5f, -0.5f, 0.0f,
-         0.5f, -0.5f, 1.0f,
-         0.0f,  0.5f, 0.5f,
+         0.5f, -0.5f, 0.0f, 0.5f, 0.809f,
+         0.5f, -0.5f, 1.0f, 0.809f, 0.5f,
+         0.0f,  0.5f, 0.5f, 1.0f, 1.0f,
 
         // third wall
-        -0.5f, -0.5f, 1.0f,
-         0.5f, -0.5f, 1.0f,
-         0.0f,  0.5f, 0.5f,
+        -0.5f, -0.5f, 1.0f, 0.809f, 0.5f,
+         0.5f, -0.5f, 1.0f, 0.5f, 0.191f,
+         0.0f,  0.5f, 0.5f, 1.0f, 0.0f,
 
         // fourth wall
-        -0.5f, -0.5f, 0.0f,
-        -0.5f, -0.5f, 1.0f,
-         0.0f,  0.5f, 0.5f,
+        -0.5f, -0.5f, 0.0f, 0.191f, 0.5f,
+        -0.5f, -0.5f, 1.0f, 0.5f, 0.191f,
+         0.0f,  0.5f, 0.5f, 0.0f, 0.0f,
 
         // bottom
-        -0.5f, -0.5f, 1.0f,
-         0.5f, -0.5f, 1.0f,
-         0.5f, -0.5f, 0.0f,
-        -0.5f, -0.5f, 0.0f,
+        -0.5f, -0.5f, 1.0f, 0.5f, 0.191f,
+         0.5f, -0.5f, 1.0f, 0.809f, 0.5f,
+         0.5f, -0.5f, 0.0f, 0.5f, 0.809f,
+        -0.5f, -0.5f, 0.0f, 0.191f, 0.5f,
     };
 
     std::vector<GLushort> indexes = {
@@ -69,36 +78,26 @@ void SimpleShapeApplication::init() {
 
     pyramid->allocate_vertex_buffer(vertices.size() * sizeof(GLfloat), GL_STATIC_DRAW);
     pyramid->load_vertices(0, vertices.size() * sizeof(GLfloat), vertices.data());
-    pyramid->vertex_attrib_pointer(0, 3, GL_FLOAT, 3 * sizeof(GLfloat), 0);
+    pyramid->vertex_attrib_pointer(0, 3, GL_FLOAT, 5 * sizeof(GLfloat), 0);
+    pyramid->vertex_attrib_pointer(1, 2, GL_FLOAT, 5 * sizeof(GLfloat), 3 * sizeof(GLfloat));
+
 
     pyramid->allocate_index_buffer(indexes.size() * sizeof(GLushort), GL_STATIC_DRAW);
     pyramid->load_indices(0, indexes.size() * sizeof(GLushort), indexes.data());
 
-    pyramid->add_submesh( 0,  3, mat_green);   // first wall
-    pyramid->add_submesh( 3,  6, mat_red);     // second wall
-    pyramid->add_submesh( 6,  9, mat_blue);    // third wall
-    pyramid->add_submesh( 9, 12, mat_purple);  // fourth wall
-    pyramid->add_submesh(12, 18, mat_cyan);    // bottom (2 triangles)
+    // pyramid->add_submesh( 0,  3, mat_green);   // first wall
+    // pyramid->add_submesh( 3,  6, mat_red);     // second wall
+    // pyramid->add_submesh( 6,  9, mat_blue);    // third wall
+    // pyramid->add_submesh( 9, 12, mat_purple);  // fourth wall
+    // pyramid->add_submesh(12, 18, mat_cyan);    // bottom (2 triangles)
+
+    pyramid->add_submesh( 0,  3, texture_multicolor);   // first wall
+    pyramid->add_submesh( 3,  6, texture_multicolor);   // second wall
+    pyramid->add_submesh( 6,  9, texture_multicolor);   // third wall
+    pyramid->add_submesh( 9, 12, texture_multicolor);   // fourth wall
+    pyramid->add_submesh(12, 18, texture_multicolor);   // bottom (2 triangles)
 
     add_submesh(pyramid);
-
-    // modifier data:
-    float strength = 1.0f;
-    float color[3] = {1.0f, 1.0f, 1.0f};
-
-    float modifier_uniform_data[8] = {0};
-    modifier_uniform_data[0] = strength;
-    modifier_uniform_data[4] = color[0];
-    modifier_uniform_data[5] = color[1];
-    modifier_uniform_data[6] = color[2];
-
-
-    // uniform modifier buffer
-    GLuint modifier_u_buffer_handle;
-    glGenBuffers(1, &modifier_u_buffer_handle);
-    glBindBuffer(GL_UNIFORM_BUFFER, modifier_u_buffer_handle);
-    glBufferData(GL_UNIFORM_BUFFER, 8*sizeof(float), nullptr, GL_STATIC_DRAW);
-    glBindBufferBase(GL_UNIFORM_BUFFER, 0, modifier_u_buffer_handle);
 
     // uniform transform PVM buffer
     glBindBuffer(GL_UNIFORM_BUFFER, u_pvm_buffer_);
@@ -110,10 +109,6 @@ void SimpleShapeApplication::init() {
     // the state of all vertex buffers needed for rendering
     glGenVertexArrays(1, &vao_);
     glBindVertexArray(vao_);
-
-    // ----------- uniform modifier ---------
-    glBindBuffer(GL_UNIFORM_BUFFER, modifier_u_buffer_handle);
-    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(modifier_uniform_data), modifier_uniform_data);
 
 
     glBindVertexArray(0);

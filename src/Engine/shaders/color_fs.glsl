@@ -5,7 +5,7 @@ layout(location=0) out vec4 vFragColor;
 #if __VERSION__ > 410
 layout(std140, binding=0) uniform Modifiers {
 #else
-    layout(std140) uniform Color {
+layout(std140) uniform Color {
     #endif
     vec4  Kd;
     bool use_map_Kd;
@@ -17,7 +17,7 @@ uniform sampler2D map_Kd;
 
 void main() {
     if (use_map_Kd)
-        vFragColor = Kd*texture(map_Kd, vertex_texcoords_0);
-        else
+        vFragColor = Kd*texture(map_Kd, vertex_texcoords);
+    else
         vFragColor = Kd;
 }

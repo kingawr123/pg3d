@@ -7,6 +7,8 @@
 
 #include "Material.h"
 
+#include "stb/stb_image.h"
+
 namespace xe {
 
     GLuint ColorMaterial::color_uniform_buffer_ = 0u;
@@ -27,14 +29,19 @@ namespace xe {
         glBindBufferBase(GL_UNIFORM_BUFFER, 0, color_uniform_buffer_);
         glBindBuffer(GL_UNIFORM_BUFFER, color_uniform_buffer_);
         glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::vec4), &color_[0]);
+        glBufferSubData(GL_UNIFORM_BUFFER, 4 * sizeof(float), sizeof(GLint), &use_map_Kd);
+
         glBindBuffer(GL_UNIFORM_BUFFER, 0u);
 
     }
 
+    void ColorMaterial::unbind() {
+        glBindBuffer(GL_UNIFORM_BUFFER, 0u);
+        glBindTexture(GL_TEXTURE_2D, 0u);
+    }
+
 
     void ColorMaterial::init() {
-
-
         auto program = xe::utils::create_program(
                 {{GL_VERTEX_SHADER,   std::string(PROJECT_DIR) + "/shaders/color_vs.glsl"},
                  {GL_FRAGMENT_SHADER, std::string(PROJECT_DIR) + "/shaders/color_fs.glsl"}});
@@ -48,7 +55,7 @@ namespace xe {
         glGenBuffers(1, &color_uniform_buffer_);
 
         glBindBuffer(GL_UNIFORM_BUFFER, color_uniform_buffer_);
-        glBufferData(GL_UNIFORM_BUFFER, sizeof(glm::vec4), nullptr, GL_STATIC_DRAW);
+        glBufferData(GL_UNIFORM_BUFFER, 2 * sizeof(glm::vec4), nullptr, GL_STATIC_DRAW);
         glBindBuffer(GL_UNIFORM_BUFFER, 0u);
 #if __APPLE__
         auto u_modifiers_index = glGetUniformBlockIndex(program, "Color");
@@ -74,6 +81,34 @@ namespace xe {
             spdlog::warn("Cannot get uniform {} location", "map_Kd");
         }
 
+    }
+
+    GLuint create_texture(const std::string &name) {
+        stbi_set_flip_vertically_on_load(true);
+        GLint width, height, channels;
+        auto texture_file = std::string(ROOT_DIR) + "/Models/" + name;
+
+        auto img = stbi_load(texture_file.c_str(), &width, &height, &channels, 0);
+        if (!img) {
+            spdlog::warn("Could not read image from file `{}'", name);
+            return 0;
+        }
+        GLenum format = GL_RGB;
+        if (channels == 4) {
+            format = GL_RGBA;
+        }
+
+        GLuint texture;
+        glGenTextures(1, &texture);
+        glBindTexture(GL_TEXTURE_2D, texture);
+
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, format, GL_UNSIGNED_BYTE, img);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+        glBindTexture(GL_TEXTURE_2D, 0u);
+
+        return texture;
     }
 
 }
