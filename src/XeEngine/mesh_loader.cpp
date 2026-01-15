@@ -27,7 +27,6 @@ namespace {
 
 namespace xe {
 
-
     std::shared_ptr<Mesh> load_mesh_from_obj(std::string path, std::string mtl_dir) {
 
         auto smesh = xe::load_smesh_from_obj(path, mtl_dir);

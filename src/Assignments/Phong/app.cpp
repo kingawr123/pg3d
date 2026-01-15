@@ -14,22 +14,24 @@
 #include "Application/utils.h"
 #include "glm/gtc/type_ptr.hpp"
 #include "Engine/Mesh.h"
-#include "Engine/Material.h"
 #include "Engine/mesh_loader.h"
 
 #define STB_IMAGE_IMPLEMENTATION  1
 
 #include "3rdParty/stb/stb_image.h"
+#include "Engine/ColorMaterial.h"
+#include "Engine/PhongMaterial.h"
 
 void SimpleShapeApplication::init() {
 
     xe::ColorMaterial::init();
+    xe::PhongMaterial::init();
+
     set_controller(new CameraController(camera()));
 
-    xe::Mesh *pyramid_v2 = xe::load_mesh_from_obj(std::string(ROOT_DIR) + "/Models/pyramid.obj",
-                                                  std::string(ROOT_DIR) + "/Models");
-    add_submesh(pyramid_v2);
-
+    xe::Mesh *square = xe::load_mesh_from_obj(std::string(ROOT_DIR) + "/Models/square.obj",
+                                              std::string(ROOT_DIR) + "/Models");
+    add_submesh(square);
     // uniform transform PVM buffer
     glBindBuffer(GL_UNIFORM_BUFFER, u_pvm_buffer_);
     glBufferData(GL_UNIFORM_BUFFER, 16*sizeof(float), nullptr, GL_STATIC_DRAW); // 16 * sizeof(float) = 64
