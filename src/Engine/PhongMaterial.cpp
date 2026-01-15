@@ -1,7 +1,3 @@
-//
-// Created by Piotr Białas on 20/11/2021.
-//
-
 #include "PhongMaterial.h"
 
 #include "Application/utils.h"
