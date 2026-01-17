@@ -14,6 +14,7 @@
 
 #include "camera.h"
 #include "camera_controller.h"
+#include "Engine/Lights.h"
 #include "glm/ext/scalar_constants.hpp"
 #include "Engine/Mesh.h"
 
@@ -81,6 +82,14 @@ public:
         meshes_.push_back(mesh);
     }
 
+    void add_light(const xe::PointLight &p_light) {
+        p_lights_.push_back(p_light);
+    }
+
+    void add_ambient(glm::vec3 ambient) {
+        ambient_ = ambient;
+    }
+
     ~SimpleShapeApplication() {
         if (camera_) {
             delete camera_;
@@ -92,4 +101,8 @@ private:
     CameraController *controller_;
     GLuint u_pvm_buffer_;
     std::vector<xe::Mesh*> meshes_;
+
+    GLuint lights_ubo_ = 0;
+    glm::vec3 ambient_;
+    std::vector<xe::PointLight> p_lights_;
 };

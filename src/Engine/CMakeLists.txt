@@ -11,6 +11,7 @@ add_library(engine
         mesh_loader.cpp mesh_loader.h
         Texture.h
         Texture.cpp
+        Lights.h
 )
 
 target_link_libraries(engine PUBLIC objreader PRIVATE spdlog::spdlog)
