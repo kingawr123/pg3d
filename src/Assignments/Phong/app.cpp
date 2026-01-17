@@ -54,7 +54,7 @@ void SimpleShapeApplication::init() {
                                               std::string(ROOT_DIR) + "/Models");
     add_submesh(square);
 
-    xe::PointLight light = xe::PointLight(glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(1.0f, 1.0f, 1.0f), 1.0f, 1.0f);
+    xe::PointLight light = xe::PointLight(glm::vec3(0.0f, 0.0f, 1.0f), glm::vec3(1.0f, 1.0f, 1.0f), 1.0f, 1.0f);
     add_light(light);
 
     auto ambient = glm::vec3(1.0f, 0.0f, 0.0f);
@@ -73,20 +73,15 @@ void SimpleShapeApplication::init() {
     glBindBufferBase(GL_UNIFORM_BUFFER, 2, lights_ubo_);
 
 
-    // uniform transform PVM buffer
     glBindBuffer(GL_UNIFORM_BUFFER, u_pvm_buffer_);
     glBufferData(GL_UNIFORM_BUFFER, 16*sizeof(float) + 16*sizeof(float) + 12*sizeof(float), nullptr, GL_STATIC_DRAW);
     glBindBufferBase(GL_UNIFORM_BUFFER, 1, u_pvm_buffer_);
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
-    // This setups a Vertex Array Object (VAO) that  encapsulates
-    // the state of all vertex buffers needed for rendering
     glGenVertexArrays(1, &vao_);
     glBindVertexArray(vao_);
 
-
     glBindVertexArray(0);
-    //end of vao "recording"
 
     // Setting the background color of the rendering window,
     // I suggest not to use white or black for better debugging.
@@ -147,13 +142,10 @@ void SimpleShapeApplication::frame() {
     glBufferSubData(GL_UNIFORM_BUFFER, kNumLightsOffset, sizeof(GLuint), &lights_size);
 
 
-    // per-light data
     for (GLuint i = 0; i < lights_size; ++i) {
         auto &light = p_lights_[i];
 
-        // world space -> view space
         const glm::vec3 posVS = glm::vec3(camera_->view() * glm::vec4(light.position_in_ws, 1.0f));
-        // optionally store back into your CPU struct
         light.position_in_vs = posVS;
 
         // base offset for light i
@@ -163,7 +155,6 @@ void SimpleShapeApplication::frame() {
 
         glBufferSubData(GL_UNIFORM_BUFFER, base + kColorOffsetInLight, sizeof(glm::vec4), glm::value_ptr(light.color));
 
-        // intensity and radius
         glBufferSubData(GL_UNIFORM_BUFFER, base + kIntensityOffset, sizeof(float), &light.intensity);
         glBufferSubData(GL_UNIFORM_BUFFER, base + kRadiusOffset,    sizeof(float), &light.radius);
     }
