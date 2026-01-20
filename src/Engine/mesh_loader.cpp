@@ -32,7 +32,7 @@ namespace xe {
 
     using uint = unsigned int;
 
-    Mesh* load_mesh_from_obj(std::string path, std::string mtl_dir) {
+    std::shared_ptr<Mesh> load_mesh_from_obj(std::string path, std::string mtl_dir) {
 
         auto smesh = xe::load_smesh_from_obj(path, mtl_dir);
         if (smesh.vertex_coords.empty())
@@ -132,7 +132,7 @@ namespace xe {
 
         }
 
-        return mesh;
+        return std::shared_ptr<Mesh>(mesh);
     }
 }
 

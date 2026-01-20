@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <memory>
 #include <vector>
 
 #include "Application/application.h"
@@ -78,7 +79,7 @@ public:
         }
     }
 
-    void add_submesh(xe::Mesh *mesh) {
+    void add_submesh(std::shared_ptr<xe::Mesh> mesh) {
         meshes_.push_back(mesh);
     }
 
@@ -100,7 +101,7 @@ private:
     Camera *camera_;
     CameraController *controller_;
     GLuint u_pvm_buffer_;
-    std::vector<xe::Mesh*> meshes_;
+    std::vector<std::shared_ptr<xe::Mesh>> meshes_;
 
     GLuint lights_ubo_ = 0;
     glm::vec3 ambient_;

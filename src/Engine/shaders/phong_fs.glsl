@@ -41,8 +41,8 @@ void main() {
         vFragColor = Kd;
 
 
-    vec3 base = Kd.rgb;
-    vFragColor = vec4(Kd.rgb, 1.0);
+    vFragColor.a = Kd.a;
+    vFragColor.rgb = ambient;
 
 
 }

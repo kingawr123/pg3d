@@ -50,11 +50,11 @@ void SimpleShapeApplication::init() {
 
     set_controller(new CameraController(camera()));
 
-    xe::Mesh *square = xe::load_mesh_from_obj(std::string(ROOT_DIR) + "/Models/square.obj",
+    std::shared_ptr<xe::Mesh>square = xe::load_mesh_from_obj(std::string(ROOT_DIR) + "/Models/square.obj",
                                               std::string(ROOT_DIR) + "/Models");
     add_submesh(square);
 
-    xe::PointLight light = xe::PointLight(glm::vec3(0.0f, 0.0f, 1.0f), glm::vec3(1.0f, 1.0f, 1.0f), 1.0f, 1.0f);
+    xe::PointLight light = xe::PointLight(glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(1.0f, 0.0f, 0.0f), 1.0f, 2.0f);
     add_light(light);
 
     auto ambient = glm::vec3(1.0f, 0.0f, 0.0f);
