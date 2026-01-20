@@ -40,5 +40,9 @@ void main() {
     else
         vFragColor = Kd;
 
-    vFragColor = abs(vec4(vertex_coords_in_vs, 0.0f));
+
+    vec3 base = Kd.rgb;
+    vFragColor = vec4(Kd.rgb, 1.0);
+
+
 }
