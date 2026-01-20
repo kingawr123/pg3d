@@ -42,22 +42,22 @@ void main() {
 
     for (uint i = 0u; i < n_p_lights; ++i) {
         PointLight L = p_light[i];
+        vec3 toL = normalize(L.position_in_view_space - P);
 
-        vec3 toL = L.position_in_view_space - P;
         float dist = length(toL);
         if (dist > L.radius) {
             continue;
         }
 
         vec3  Ldir = toL/max(dist, 1e-6);
-        float NdotL = max(dot(N, Ldir), 0.0);
+        float lambertian = max(dot(N, toL), 0.0);
 
-        vec3 Li = L.color * L.intensity * NdotL;
+        vec3 Li = L.color * L.intensity * lambertian;
 
         Lsum += Li;
     }
 
-    vec3 finalColor = Lsum * baseColor;
-    vFragColor = vec4(finalColor, 1.0);
+    vFragColor = vec4(0.1 * ambient * baseColor + 0.25 * Lsum , 1.0f);
 
 }
+
