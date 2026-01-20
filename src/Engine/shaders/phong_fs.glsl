@@ -33,16 +33,31 @@ in vec3 vertex_coords_in_vs;
 uniform sampler2D map_Kd;
 
 void main() {
-    vec3 normal = normalize(vertex_normals_in_vs);
 
-    if (use_map_Kd)
-        vFragColor = Kd*texture(map_Kd, vertex_texcoords);
-    else
-        vFragColor = Kd;
+    vec3 N = normalize(vertex_normals_in_vs);
+    vec3 P = vertex_coords_in_vs;
 
+    vec3 baseColor = Kd.rgb;
+    vec3 Lsum = ambient;
 
-    vFragColor.a = Kd.a;
-    vFragColor.rgb = ambient;
+    for (uint i = 0u; i < n_p_lights; ++i) {
+        PointLight L = p_light[i];
 
+        vec3 toL = L.position_in_view_space - P;
+        float dist = length(toL);
+        if (dist > L.radius) {
+            continue;
+        }
+
+        vec3  Ldir = toL/max(dist, 1e-6);
+        float NdotL = max(dot(N, Ldir), 0.0);
+
+        vec3 Li = L.color * L.intensity * NdotL;
+
+        Lsum += Li;
+    }
+
+    vec3 finalColor = Lsum * baseColor;
+    vFragColor = vec4(finalColor, 1.0);
 
 }
