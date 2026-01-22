@@ -14,14 +14,14 @@ layout(std140) uniform Color {
 const int MAX_POINT_LIGHTS=24;
 
 struct PointLight {
-    vec3 position_in_view_space;
-    vec3 color;
+    vec4 position_in_view_space;
+    vec4 color;
     float intensity;
     float radius;
 } ;
 
 layout(std140, binding=2) uniform Lights {
-    vec3 ambient;
+    vec4 ambient;
     uint n_p_lights;
     PointLight p_light[MAX_POINT_LIGHTS];
 };
@@ -38,26 +38,21 @@ void main() {
     vec3 P = vertex_coords_in_vs;
 
     vec3 baseColor = Kd.rgb;
-    vec3 Lsum = ambient;
+    if (use_map_Kd) {
+        baseColor = texture(map_Kd, vertex_texcoords).rgb;
+    }
+    vec3 totalDiffuse = ambient.rgb * baseColor;
 
-    for (uint i = 0u; i < n_p_lights; ++i) {
-        PointLight L = p_light[i];
-        vec3 toL = normalize(L.position_in_view_space - P);
+    for (uint i = 0; i < n_p_lights; ++i) {
+        vec3 L_vec = p_light[i].position_in_view_space.xyz - P;
+        vec3 L = normalize(L_vec);
 
-        float dist = length(toL);
-        if (dist > L.radius) {
-            continue;
-        }
+        float diff = max(dot(N, L), 0.0);
 
-        vec3  Ldir = toL/max(dist, 1e-6);
-        float lambertian = max(dot(N, toL), 0.0);
-
-        vec3 Li = L.color * L.intensity * lambertian;
-
-        Lsum += Li;
+        totalDiffuse += diff * p_light[i].color.rgb * baseColor;
     }
 
-    vFragColor = vec4(0.1 * ambient * baseColor + 0.25 * Lsum , 1.0f);
+    vFragColor = vec4(totalDiffuse, 1.0);
 
 }
 

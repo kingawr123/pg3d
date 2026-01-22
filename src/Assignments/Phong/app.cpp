@@ -23,29 +23,6 @@
 #include "Engine/PhongMaterial.h"
 
 
-struct Std140Vec3 {
-    glm::vec3 v;
-    float _pad = 0.0f; // pad to 16 bytes
-};
-
-
-struct alignas(16) Std140PointLight {
-    Std140Vec3 position_in_view_space;
-    Std140Vec3 color;
-    float intensity;
-    float radius;
-    float _pad0 = 0.0f;
-    float _pad1 = 0.0f;
-};
-
-static_assert(sizeof(Std140PointLight) == 48, "Std140PointLight must be 48 bytes");
-
-struct Std140LightsHeader {
-    Std140Vec3 ambient;
-    uint32_t n_p_lights;
-    uint32_t _pad0 = 0;
-};
-
 void SimpleShapeApplication::init() {
 
     xe::ColorMaterial::init();
@@ -57,10 +34,11 @@ void SimpleShapeApplication::init() {
                                               std::string(ROOT_DIR) + "/Models");
     add_submesh(square);
 
-    xe::PointLight light = xe::PointLight(glm::vec3(0.0f, 0.0f, -0.2f), glm::vec3(0.0f, 1.0f, 0.0f), 3.0f, 1.0f);
+    xe::PointLight light = xe::PointLight(glm::vec3(0.0f, 0.0f, -3.0f), glm::vec3(0.0f, 7.0f, 0.0f), 3.0f, 2.0f);
     add_light(light);
 
-    auto ambient = glm::vec3(0.2f, 0.2f, 0.2f);
+
+    auto ambient = glm::vec3(0.6f, 0.3f, 0.3f);
     add_ambient(ambient);
 
 
@@ -72,11 +50,10 @@ void SimpleShapeApplication::init() {
     constexpr GLsizeiptr kMaxLights        = 24;
     constexpr GLsizeiptr kTotalLightsBytes = kHeaderSize + kMaxLights * kLightStride;
 
-    glBufferData(GL_UNIFORM_BUFFER, kTotalLightsBytes, nullptr, GL_DYNAMIC_DRAW);
-    glBindBuffer(GL_UNIFORM_BUFFER, 0);
+    glBufferData(GL_UNIFORM_BUFFER, kTotalLightsBytes, nullptr, GL_STATIC_DRAW);
 
     glBindBufferBase(GL_UNIFORM_BUFFER, 2, lights_ubo_);
-
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
 
     glBindBuffer(GL_UNIFORM_BUFFER, u_pvm_buffer_);
@@ -133,47 +110,38 @@ void SimpleShapeApplication::frame() {
 
     // ---- Lights UBO write (std140) ----
     glBindBuffer(GL_UNIFORM_BUFFER, lights_ubo_);
-    //
-    constexpr GLsizeiptr kAmbientOffset       = 0;
-    constexpr GLsizeiptr kNumLightsOffset     = 16;
-    constexpr GLsizeiptr kLightsArrayOffset   = 32;
 
-    constexpr GLsizeiptr kLightStride         = 48;
-    constexpr GLsizeiptr kPosVSOffsetInLight  = 0;   // vec4 slot
-    constexpr GLsizeiptr kColorOffsetInLight  = 16;  // vec4 slot
-    constexpr GLsizeiptr kIntensityOffset     = 32;  // float
-    constexpr GLsizeiptr kRadiusOffset        = 36;  // float
+    const GLuint nLights = static_cast<GLuint>(p_lights_.size());
+    uint32_t nLightsU32 = static_cast<uint32_t>(nLights);
 
-    const glm::vec4 ambientStd140(ambient_, 0.0f);
-    glBufferSubData(GL_UNIFORM_BUFFER, kAmbientOffset, sizeof(glm::vec4),
-                    glm::value_ptr(ambientStd140));
+    uint32_t zero = 0;
 
-    const GLuint nLights = p_lights_.size();
+    auto ambient = glm::vec4(ambient_, 1.0f);
+    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::vec4), &ambient); // 16
+    glBufferSubData(GL_UNIFORM_BUFFER, 16, sizeof(uint32_t), &nLightsU32);
+    glBufferSubData(GL_UNIFORM_BUFFER, 20, 4, &zero);
+    glBufferSubData(GL_UNIFORM_BUFFER, 24, 4, &zero);
+    glBufferSubData(GL_UNIFORM_BUFFER, 28, 4, &zero);
 
-    glBufferSubData(GL_UNIFORM_BUFFER, kNumLightsOffset, sizeof(GLuint), &nLights);
-
-    // write each light at precise offsets
     const glm::mat4 V = camera_->view();
     for (GLuint i = 0; i < nLights; ++i) {
         auto &light = p_lights_[i];
-
-        // world -> view
+        auto position_in_vs = glm::vec4(glm::vec3(V * glm::vec4(light.position_in_ws, 1.0f)), 0.0f);
         light.position_in_vs = glm::vec3(V * glm::vec4(light.position_in_ws, 1.0f));
+        auto color = glm::vec4(light.color, 1.0f);
 
-        const GLsizeiptr base = kLightsArrayOffset + static_cast<GLsizeiptr>(i) * kLightStride;
+        auto baseOffset = 32 + i * 48;
+        auto position_in_vs_offset = baseOffset;
+        auto color_offset = baseOffset + 16;
+        auto intensity_offset = color_offset + 16;
+        auto radius_offset = intensity_offset + 4;
 
-        // IMPORTANT: write padded vec3 as vec4 (16 bytes)
-        const glm::vec4 posVS4(light.position_in_vs, 0.0f);
-        glBufferSubData(GL_UNIFORM_BUFFER, base + kPosVSOffsetInLight,
-                        sizeof(glm::vec4), glm::value_ptr(posVS4));
-
-
-        const glm::vec4 color4(light.color, 0.0f);
-        glBufferSubData(GL_UNIFORM_BUFFER, base + kColorOffsetInLight,
-                        sizeof(glm::vec4), glm::value_ptr(color4));
-
-        glBufferSubData(GL_UNIFORM_BUFFER, base + kIntensityOffset, sizeof(float), &light.intensity);
-        glBufferSubData(GL_UNIFORM_BUFFER, base + kRadiusOffset,    sizeof(float), &light.radius);
+        glBufferSubData(GL_UNIFORM_BUFFER, position_in_vs_offset, sizeof(glm::vec4), &position_in_vs); // 16
+        glBufferSubData(GL_UNIFORM_BUFFER, color_offset, sizeof(glm::vec4), &color); // 16 -> 32
+        glBufferSubData(GL_UNIFORM_BUFFER, intensity_offset, sizeof(float), &light.intensity); // 4 -> 36
+        glBufferSubData(GL_UNIFORM_BUFFER, radius_offset, sizeof(float), &light.radius); // 4 -> 40
+        glBufferSubData(GL_UNIFORM_BUFFER, 40, 4, &zero);
+        glBufferSubData(GL_UNIFORM_BUFFER, 44, 4, &zero);
     }
 
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
