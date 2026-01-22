@@ -34,11 +34,11 @@ void SimpleShapeApplication::init() {
                                               std::string(ROOT_DIR) + "/Models");
     add_submesh(square);
 
-    xe::PointLight light = xe::PointLight(glm::vec3(0.0f, 0.0f, -3.0f), glm::vec3(0.0f, 7.0f, 0.0f), 3.0f, 2.0f);
+    xe::PointLight light = xe::PointLight(glm::vec3(0.0f, 0.0f, -0.2f), glm::vec3(0.1f, 0.4f, 0.6f), 7.0f, 1.2f);
     add_light(light);
 
 
-    auto ambient = glm::vec3(0.6f, 0.3f, 0.3f);
+    auto ambient = glm::vec3(0.5f, 0.2f, 0.2f);
     add_ambient(ambient);
 
 
